@@ -3,7 +3,7 @@ import {useSocket} from "../../hooks/useSocket.ts";
 import Message from "./Message.tsx";
 
 const Messages = () => {
-    const {data} = useSocket("updatedChat");
+    const {data}: any = useSocket("updatedChat");
 
     const lastMessageRef = useRef<HTMLDivElement | undefined>();
 
@@ -18,7 +18,7 @@ const Messages = () => {
     return (
         <div className='px-4 flex-1 overflow-auto mt-1'>
             {data?.messages?.length > 0 &&
-                data?.messages?.map((message) => (
+                data?.messages?.map((message: any) => (
                     <div key={message?._id} ref={lastMessageRef}>
                         <Message message={message} />
                     </div>
