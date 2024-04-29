@@ -5,9 +5,7 @@ import Chat from "../models/chat.model.js";
 import User from "../models/user.model.js";
 import Message from "../models/message.model.js";
 
-
 const app = express();
-
 const server = http.createServer(app);
 const io = new Server(server, {
     cors: {
@@ -16,13 +14,66 @@ const io = new Server(server, {
     },
 });
 
+const userSocketMap = {};
+
 io.on("connection", async (socket) => {
     const userId = socket.handshake.query.userId;
-    const user = await User.findById(userId);
+    userSocketMap[userId] = socket.id;
 
-    io.emit("getUser", user);
-    socket.broadcast.emit('getNewUser', user);
+    socket.join(userId);
 
+    socket.on("getUser", async () => {
+        try {
+            const user = await User.findById(userId);
+            io.to(userId).emit("getUser", user);
+        } catch (error) {
+            console.error("Error fetching user:", error);
+        }
+    });
+
+    socket.on("sendMessage", async (message) => {
+        try {
+            const newMessage = new Message({
+                senderId: message.senderId,
+                chatId: message.chatId,
+                message: message.message,
+            });
+
+            const chat = await Chat.findById(message.chatId);
+
+            chat.messages.push(newMessage._id);
+            await Promise.all([chat.save(), newMessage.save()]);
+
+            const chatUpdated = await Chat.findById(message.chatId).populate("messages");
+
+            io.to(chatUpdated.users).emit("updatedChat", chatUpdated);
+        } catch (error) {
+            console.error("Error handling message:", error);
+        }
+    });
+
+    socket.on("getMessages", async () => {
+        try {
+            const user = await User.findById(userId);
+            const chat = await Chat.findOne({chatId: user.chatId}).populate("messages");
+
+            io.to(userId).emit("updatedChat", chat);
+        } catch (error) {
+            console.error("Error fetching messages:", error);
+        }
+    });
+
+    socket.on('updateChatId', async ({chatId}) => {
+        try {
+            const userUpdated = await User.findByIdAndUpdate(userId, {chatId});
+            const chat = await Chat.findOne({chatId}).populate("messages");
+
+            io.to(userId).emit("getUser", userUpdated);
+            io.to(userId).emit("updatedChat", chat);
+        } catch (error) {
+            console.error('Error updating chatId:', error);
+        }
+    })
 
     try {
         const chats = await Chat.find();
@@ -32,56 +83,9 @@ io.on("connection", async (socket) => {
         console.error("Error fetching chats:", error);
     }
 
-
-    socket.on("sendMessage", async (message) => {
-        try {
-            const chat = await Chat.findOne({chatId: message?.chatId});
-
-            const newMessage = new Message({
-                senderId: message.senderId,
-                chatId: chat._id,
-                message: message.message,
-            });
-
-            chat.messages.push(newMessage._id);
-            await Promise.all([chat.save(), newMessage.save()]);
-
-            const chats = await Chat.findOne({chatId: message?.chatId}).populate("messages");
-
-            io.emit("updatedChat", chats);
-        } catch (error) {
-            console.error("Error handling message:", error);
-        }
-    });
-
-
-    socket.on('updateChatId', async ({chatId}) => {
-        try {
-            const userUpdated = await User.findByIdAndUpdate(user._id, {chatId});
-            const chat = await Chat.findOne({chatId}).populate("messages");
-
-            io.emit("getUser", userUpdated);
-            io.emit("updatedChat", chat);
-        } catch (error) {
-            console.error('Error updating chatId:', error);
-        }
-    });
-
-
-    socket.on('getMessages', async (chatId) => {
-        try {
-
-            const chat = await Chat.findOne({chatId}).populate("messages");
-
-            io.emit("updatedChat", chat);
-        } catch (error) {
-            console.error('Error updating getMessages:', error);
-        }
-    });
-
-
     socket.on("disconnect", () => {
-        console.log("user disconnected", socket.id);
+        console.log("User disconnected", userId);
+        delete userSocketMap[userId];
     });
 });
 

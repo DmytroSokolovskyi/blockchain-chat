@@ -6,7 +6,7 @@ export interface IUser {
 	profilePic: string;
     chatId?: number;
 	_id: string;
-}
+};
 export interface IAuthContext {
   authUser: IUser | null;
   setAuthUser: React.Dispatch<React.SetStateAction<IUser | null>>;
@@ -14,7 +14,7 @@ export interface IAuthContext {
 
 export interface ISocketContext {
     socket: SocketIOClient.Socket | null;
-    user: IUser;
+    user: IUser | null;
 }
 
 export interface IChat {

@@ -1,11 +1,11 @@
-import {useSocketContext} from "../../providers/SocketContext.tsx";
+import {useAuthContext} from "../../providers/AuthContext.tsx";
 
 const Message = ({message}: { message: any; }) => {
-    const {user} = useSocketContext();
+    const {authUser} = useAuthContext();
 
-    const fromMe = message.senderId === user?._id;
+    const fromMe = message.senderId === authUser?._id;
     const chatClassName = fromMe ? "chat-end" : "chat-start";
-    const profilePic = user?.profilePic;
+    const profilePic = authUser?.profilePic;
     const bubbleBgColor = fromMe ? "bg-blue-500" : "";
 
     return (

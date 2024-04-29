@@ -5,7 +5,7 @@ import Message from "./Message.tsx";
 const Messages = () => {
     const {data}: any = useSocket("updatedChat");
 
-    const lastMessageRef = useRef<HTMLDivElement | undefined>();
+    const lastMessageRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
         setTimeout(() => {

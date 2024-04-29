@@ -2,10 +2,12 @@ import React from "react";
 import {useSocket} from "../../hooks/useSocket.ts";
 import {IChat} from "../../utils/types.ts";
 import {axiosInstance, useSocketContext} from "../../providers/SocketContext.tsx";
+import {useAuthContext} from "../../providers/AuthContext.tsx";
 
 const Sidebar: React.FC = () => {
     const {data} = useSocket("updatedChats");
-    const {socket, user} = useSocketContext();
+    const {socket} = useSocketContext();
+    const {authUser} = useAuthContext();
 
     const selectChat = (chatId: number) => {
         if (socket) {
@@ -22,10 +24,10 @@ const Sidebar: React.FC = () => {
     return (
         <div className='border-r border-slate-500 p-4 flex flex-col justify-between'>
             <div className='py-2 flex flex-col overflow-auto'>
-                {data && data.filter((one: IChat) => one.users.includes(user?._id))?.map((chat: IChat) => (
+                {data && authUser && data.filter((one: IChat) => one.users.includes(authUser._id))?.map((chat: IChat) => (
                     <div
                         key={chat.chatId}
-                        className={`flex gap-2 m-1 items-center hover:bg-gray-light rounded p-2 py-1 cursor-pointer bg-gray-dark ${user?.chatId === chat.chatId ? "bg-white" : ""}`}
+                        className={`flex gap-2 m-1 items-center hover:bg-gray-light rounded p-2 py-1 cursor-pointer bg-gray-dark ${authUser?.chatId === chat.chatId ? "bg-white" : ""}`}
                         onClick={() => selectChat(chat.chatId)}
                     >
                         <div className='flex flex-col flex-1'>

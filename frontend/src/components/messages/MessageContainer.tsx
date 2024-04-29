@@ -4,10 +4,10 @@ import MessageInput from "./MessageInput.tsx";
 import {useSocketContext} from "../../providers/SocketContext.tsx";
 
 const MessageContainer: React.FC = () => {
-    const {socket, user} = useSocketContext();
+    const {socket} = useSocketContext();
 
     if (socket) {
-        socket.emit('getMessages',  user?.chatId);
+        socket.emit('getMessages');
     }
 
     return (
